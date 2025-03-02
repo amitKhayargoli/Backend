@@ -1,0 +1,86 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  user
+  admin
+}
+
+model User {
+  userId            Int           @id @default(autoincrement())
+  username          String
+  email             String        @unique
+  password          String
+  role              Role          @default(user)
+  profilePictureUrl String?
+  comments          Comment[]
+  projectTeams      ProjectTeam[]
+}
+
+model Project {
+  id             Int             @id @default(autoincrement())
+  name           String
+  description    String?
+  startDate      DateTime?
+  endDate        DateTime?
+  tasks          Task[]
+  coverURL       String?
+  projectTeams   ProjectTeam[]
+  projectInvites ProjectInvite[]
+}
+
+model Task {
+  id          Int       @id @default(autoincrement())
+  title       String
+  description String?
+  status      String    @default("To do")
+  priority    String?
+  tags        String?
+  startDate   DateTime
+  dueDate     DateTime
+  projectId   Int
+  fileURL     String?
+  project     Project   @relation(fields: [projectId], references: [id])
+  comments    Comment[]
+}
+
+model ProjectTeam {
+  id        Int     @id @default(autoincrement())
+  userId    Int
+  projectId Int
+  user      User    @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model ProjectInvite {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  projectId Int
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+}
+
+model Comment {
+  id     Int    @id @default(autoincrement())
+  text   String
+  taskId Int
+  userId Int
+  task   Task   @relation(fields: [taskId], references: [id])
+  user   User   @relation(fields: [userId], references: [userId])
+}
+
+model Blog {
+  id        Int      @id @default(autoincrement())
+  title     String
+  content   String
+  category  String
+  createdAt DateTime @default(now())
+  imageUrl  String
+}
